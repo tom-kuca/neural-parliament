@@ -1,3 +1,8 @@
 Development - single iteration: 
-./generate-data.sh 20 150;
-./master.sh 1
+	./generate-data.sh 20 150;
+	./master.sh 1
+
+Development - complete: 
+	./generate-data.sh 20 150;
+	./master.sh	
+	

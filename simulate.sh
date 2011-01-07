@@ -2,7 +2,7 @@
 # ./simulate.sh memberId
 
 if [ x$1 = x ]; then 
-	echo "Usage: ./node.sh memberId";
+	echo "Usage: ./simulate.sh memberId";
 	exit 1;
 fi;
 
@@ -20,6 +20,7 @@ tail -n${linesT} sim.$columnId.complete | head -n${lines} > sim.$columnId;
 
 cat sim.$columnId;
 
+rm -rf sim.${columnId} sim.${columnId}.complete $fName.m;
 
 
 

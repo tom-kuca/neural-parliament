@@ -27,6 +27,8 @@ hostname;
 echo $columnId;
 cat res.$columnId;
 
+rm -rf res.${columnId} res.${columnId}.complete $fName.m;
+
 
 
 

@@ -5,6 +5,7 @@ use strict;
 use GRID::Cluster;
 use Data::Dumper;
 use File::Basename;
+use File::Copy;
 use Cwd;
 
 
@@ -32,7 +33,7 @@ while ( <$fh> ) {
 close($fh);
 
 # debugovani
-%machines = ("u-pl28" => 2, "u-pl29" => 2);
+%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> , 'u-pl3' => 7);
 #machines = ("u-pl28" => 4);
 
 # nacti datove soubory
@@ -44,8 +45,19 @@ while ( <$fh> ) {
 	chomp;
 	$members{$memberCount} = {'name' => $_, 'type' => 0};
 }
+close($fh);
 
 
+copy("input.txt", "input.txt.begin");
+my @voting;
+my $votingId = 0;
+open($fh, '<', 'input.txt');
+while ( <$fh> ) {
+	chomp;	
+	my @p = map(int, split);
+	$voting[$votingId++] = \@p;
+}
+close($fh);
 
 my $limit = $memberCount;
 if ( exists($ARGV[0]) ) {
@@ -56,6 +68,9 @@ my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 
 for my $round ( 1 .. ($limit) ) { 
 	# vytvor prikazy pro jednotlive poslance
+	
+	createInputFile("input.txt.".$round);
+	copy("input.txt", "input.txt.".$round);
 
 	my @commands = ();
 	for my $k (grep { $members{$_}{type} == 0 } keys %members) {
@@ -82,7 +97,18 @@ for my $round ( 1 .. ($limit) ) {
 	}
 	$members{$r}{type} = $round;
 	
+	open(my $fhSim, '-|', "./simulate.sh $r");
+	my @mVoting = ();
+	my $mVotingId = 0;
+	while ( <$fhSim> ) { 
+		chomp;
+		$mVoting[$votingId] = int($_);
+		$voting[$votingId][$r - 1] = int($_);
+	}	
+	close($fhSim);
 }
+createInputFile("input.txt.end");
+copy("input.txt.begin", "input.txt");
 
 sub min
 {
@@ -92,4 +118,15 @@ sub min
 	} else { 
 		return $v2;
 	}
+}
+
+sub createInputFile
+{
+	my $fName = shift;
+	open(my $fh, '>', $fName);
+	for my $v (@voting) { 
+		print ${fh} join("\t", @{$v}), "\n";	
+	}
+	close($fh);
+
 }

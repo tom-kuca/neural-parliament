@@ -11,9 +11,13 @@ fName=ga_$columnId;
 
 sed -r "s/^columnId = [0-9]+/columnId = $columnId/" ga.m > $fName.m;
 sed -ri "s/^function ga/function $fName/" $fName.m;
+sed -ri "s/^function ga/function $fName/" $fName.m;
+sed -ri "s/trained_net/trained_net_${columnId}/" $fName.m;
 
-export DISPLAY=:${columnId}
-Xvfb :${columnId} -screen 0 1024x768x16 &
+
+disp=`echo $((${columnId} + 20))`;
+export DISPLAY=:${disp}
+Xvfb :${disp} -screen 0 1024x768x16 &
 xb=`echo $!`;
 echo "quit; " | nice -n 19 /afs/ms/@sys/bin/matlab -nodesktop -nosplash -r $fName > res.$columnId.complete;
 #perl -e 'print (("\n", rand()) x 3);' > res.$columnId.complete;

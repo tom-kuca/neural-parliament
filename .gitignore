@@ -1,2 +1,8 @@
 ga_*.m
 res.*
+trained_net_*.mat
+sim.*
+input.*
+votings.txt
+members.txt
+lab-info.txt

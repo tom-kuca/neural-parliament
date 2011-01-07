@@ -1,17 +1,18 @@
+function out = name(args)
 columnId = 3;
 
 % nejaky vypocet
 load input.txt
 
-num_votings = length(input);
-num_voters = length(input(1,:));
+num_votings = length(input)
+num_voters = length(input(1,:))
 
 voting = [input(:, 1:columnId-1) input(:, (columnId+1):num_voters)]';
 result = input(:, columnId)';
 
 net=newff(voting,result,[100],{},'traingdm');
 net.trainParam.lr = 0.01;
-net.trainParam.epochs = 1000;
+net.trainParam.epochs = 100;
 net.trainParam.goal = 0.1;
 net.trainParam.max_fail = 20;
 
@@ -23,7 +24,7 @@ total = sum(result ~= 0);
 hits_pct = (total-miss) / total;
 
 % nekam se ulozi natrenovana neuronoa sit
+save 
 
 % shoda site s poslancem
 fprintf(1,'%f\n', hits_pct);
-

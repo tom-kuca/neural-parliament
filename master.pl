@@ -9,8 +9,7 @@ use Cwd;
 
 
 my $INFO_FILE = 'lab-info.txt';
-my $MEMORY_REQUIREMENT = 200;
-my $memberCount = 6;
+my $MEMORY_REQUIREMENT = 1000000;
 my $WORKING_DIRECTORY = dirname(Cwd::abs_path($0)) . '/';
 
 
@@ -30,18 +29,22 @@ while ( <$fh> ) {
 	my @p = split;
 	$machines{$p[0]} = min($p[1], int($p[2] / $MEMORY_REQUIREMENT)); 
 }
+close($fh);
 
 # debugovani
 %machines = ("u-pl28" => 2, "u-pl29" => 2);
 #machines = ("u-pl28" => 4);
 
-
-# inicializuj poslance
+# nacti datove soubory
+open($fh, '<', 'members.txt');
+my $memberCount = 0;
 my %members = ();
-for my $i ( 1 .. ($memberCount) ) { 
-	$members{$i} = 0;
+while ( <$fh> ) {
+	$memberCount++;
+	chomp;
+	$members{$memberCount} = {'name' => $_, 'type' => 0};
 }
-  
+
 my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 
 
@@ -49,7 +52,7 @@ for my $round ( 1 .. ($memberCount) ) {
 	# vytvor prikazy pro jednotlive poslance
 
 	my @commands = ();
-	for my $k (grep { $members{$_} == 0 } keys %members) {
+	for my $k (grep { $members{$_}{type} == 0 } keys %members) {
 		push(@commands, "./node.sh $k");
 	}
 
@@ -60,17 +63,19 @@ for my $round ( 1 .. ($memberCount) ) {
 	my %results = ();
 	for my $res (@{$result}) {
 		my @p = split(/\n/, $res);
-		$results{$p[0]} = $p[1];
+		$results{$p[1]} = { 'score' => $p[2],
+							'host' => $p[0] };
 	}
 
-	my @sorted = sort { $results{$b} <=> $results{$a} } keys %results;
+	my @sorted = sort { $results{$b}{score} <=> $results{$a}{score} } keys %results;
 	my $r = $sorted[0];
 
-	print "$round\t$r\t$results{$r}\n";
+	print "$round\t$r\t$members{$r}{name}\t$results{$r}{score}\n";
 	for my $k (@sorted) { 
-		print STDERR "\t$k\t$results{$k}\n";
+		print STDOUT "\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\n";
 	}
-	$members{$r} = $round;
+	$members{$r}{type} = $round;
+	
 }
 
 sub min

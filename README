@@ -1,1 +1,3 @@
-2011-01-05
+Development - single iteration: 
+./generate-data.sh 20 150;
+./master.sh 1

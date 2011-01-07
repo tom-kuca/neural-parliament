@@ -1,4 +1,5 @@
 columnId = 3;
+rand('seed',sum(100*clock));
 
 % Nahodna neuronova sit
 %

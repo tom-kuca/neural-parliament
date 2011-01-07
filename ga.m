@@ -1,6 +1,4 @@
-function ga(  )
-
-columnId = 19;
+columnId = 3;
 
 % nejaky vypocet
 load input.txt
@@ -8,7 +6,7 @@ load input.txt
 num_votings = length(input);
 num_voters = length(input(1,:));
 
-voting = input(:, 1:columnId-1)';
+voting = [input(:, 1:columnId-1) input(:, (columnId+1):num_voters)]';
 result = input(:, columnId)';
 
 net=newff(voting,result,[100],{},'traingdm');
@@ -20,14 +18,12 @@ net.trainParam.max_fail = 20;
 [net1,tr]=train(net,voting,result);
 simulation = hardlims(sim(net1, voting));
 
-miss = sum(simulation + result == 0)
-total = sum(result ~= 0)
+miss = sum(simulation + result == 0);
+total = sum(result ~= 0);
 hits_pct = (total-miss) / total;
 
 % nekam se ulozi natrenovana neuronoa sit
 
 % shoda site s poslancem
 fprintf(1,'%f\n', hits_pct);
-
-end
 

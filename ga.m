@@ -1,14 +1,19 @@
-function out = name(args)
+% Cislo sloupce, pro ktery chceme natrenovat sit
 columnId = 3;
 
-% nejaky vypocet
+% Nacist vstupni data
 load input.txt
 
-num_votings = length(input)
-num_voters = length(input(1,:))
+num_votings = length(input);
+num_voters = length(input(1,:));
 
+% Ze vstupnich dat se vytvori 
+%       trenovaci data - odebere se sloupec columnId
+%       spravne vysledky - sloupec ColumnId
 voting = [input(:, 1:columnId-1) input(:, (columnId+1):num_voters)]';
 result = input(:, columnId)';
+
+% Vytvorit neuronovou sit
 
 net=newff(voting,result,[100],{},'traingdm');
 net.trainParam.lr = 0.01;
@@ -16,15 +21,20 @@ net.trainParam.epochs = 100;
 net.trainParam.goal = 0.1;
 net.trainParam.max_fail = 20;
 
-[net1,tr]=train(net,voting,result);
-simulation = hardlims(sim(net1, voting));
+% natrenovat neuronovou sit
+%
+[trained_net,tr]=train(net,voting,result);
+simulation = hardlims(sim(trained_net, voting));
 
+% spocitact shodu s realnym hlasovanim v procentech
+%
+% pokud poslanec nehlasoval, pak se vysledek nezapocita
 miss = sum(simulation + result == 0);
 total = sum(result ~= 0);
 hits_pct = (total-miss) / total;
 
-% nekam se ulozi natrenovana neuronoa sit
-save 
+% natrenovana sit se ulozi do soubor net.4.mat (4 je columnId)
+save trained_net;
 
-% shoda site s poslancem
-fprintf(1,'%f\n', hits_pct);
+% vypsat shodu s realnym hlasovanim v procentech
+fprintf(1,'%d\n', hits_pct);

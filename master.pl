@@ -4,10 +4,15 @@ use strict;
 
 use GRID::Cluster;
 use Data::Dumper;
+use File::Basename;
+use Cwd;
+
 
 my $INFO_FILE = 'lab-info.txt';
 my $MEMORY_REQUIREMENT = 200;
-my $memberCount = 20;
+my $memberCount = 6;
+my $WORKING_DIRECTORY = dirname(Cwd::abs_path($0)) . '/';
+
 
 # nacti informace o labu
 if ( ! -f 'lab-info.txt' ) { 
@@ -27,12 +32,13 @@ while ( <$fh> ) {
 }
 
 # debugovani
-%machines = ("u-pl28" => 3, "u-pl29" => 3);
+%machines = ("u-pl28" => 2, "u-pl29" => 2);
+#machines = ("u-pl28" => 4);
 
 
 # inicializuj poslance
 my %members = ();
-for my $i ( 0 .. ($memberCount - 1) ) { 
+for my $i ( 1 .. ($memberCount) ) { 
 	$members{$i} = 0;
 }
   
@@ -47,7 +53,7 @@ for my $round ( 1 .. ($memberCount) ) {
 		push(@commands, "./node.sh $k");
 	}
 
-	$cluster->chdir("/afs/ms/u/m/majlm5am/BIG/nail002-neuronove-site/neural-parlament/");
+	$cluster->chdir($WORKING_DIRECTORY);
 
 	my $result = $cluster->qx(@commands);
 

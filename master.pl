@@ -33,7 +33,7 @@ while ( <$fh> ) {
 close($fh);
 
 # debugovani
-%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> , 'u-pl3' => 7);
+%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
 #machines = ("u-pl28" => 4);
 
 # nacti datove soubory
@@ -58,6 +58,25 @@ while ( <$fh> ) {
 	$voting[$votingId++] = \@p;
 }
 close($fh);
+
+my @votingInfo;
+$votingId = 0;
+open($fh, '<', 'votings.txt');
+while ( <$fh> ) {
+	chomp;	
+	my @p = split (/\t/);
+	$votingInfo[$votingId++] = { 
+		'id' => $p[0], 
+		'name' => $p[1], 
+		'req' => int($p[2]), 
+		'1' => int($p[3]), 
+		'-1' => int($p[4]), 
+		'0' => int($p[5]),
+		'res' => ($p[3] >= $p[2] ? 1 : -1)
+	};
+}
+close($fh);
+
 
 my $limit = $memberCount;
 if ( exists($ARGV[0]) ) {
@@ -91,24 +110,60 @@ for my $round ( 1 .. ($limit) ) {
 	my @sorted = sort { $results{$b}{score} <=> $results{$a}{score} } keys %results;
 	my $r = $sorted[0];
 
-	print "$round\t$r\t$members{$r}{name}\t$results{$r}{score}\n";
-	for my $k (@sorted) { 
-		print STDOUT "\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\n";
-	}
 	$members{$r}{type} = $round;
 	
 	open(my $fhSim, '-|', "./simulate.sh $r");
 	my @mVoting = ();
 	my $mVotingId = 0;
+	my $diffV = 0;
+	my $diffD = 0;
+	my @wrongVoting = ();
+	
 	while ( <$fhSim> ) { 
 		chomp;
-		$mVoting[$votingId] = int($_);
-		$voting[$votingId][$r - 1] = int($_);
+		my $v = int($_);
+		
+		# pokud mel v puvodnim hlasovani 0, tak i v simulaci ma 0
+		if ( $voting[$mVotingId][$r - 1] == 0 ) { 
+			$v = 0;
+		}
+		$mVoting[$votingId] = $v;
+#		print STDERR "$v vs ".$voting[$mVotingId][$r - 1]."\n";
+		if ( $v != $voting[$mVotingId][$r - 1] ) { 
+			$diffV++;
+			$votingInfo[$votingId]{$voting[$mVotingId][$r - 1]}--;
+			
+			$votingInfo[$mVotingId]{$voting[$mVotingId][$r - 1]}--;
+			$votingInfo[$mVotingId]{$v}++;
+			my $actRes = ($votingInfo[$mVotingId]{1} >= $votingInfo[$mVotingId]{-1} ? 1 : -1);
+			if ( $actRes != $votingInfo[$mVotingId]{res} ) { 
+				$diffD++;
+				push(@wrongVoting, { 'id' => $votingInfo[$mVotingId]{id}, 
+									 'name' => $votingInfo[$mVotingId]{name},
+									 'from' => $votingInfo[$mVotingId]{res},
+									 'to' => $actRes }
+				);
+			}
+		}
+
+		$voting[$mVotingId][$r - 1] = $v;
+		$mVotingId++;
 	}	
 	close($fhSim);
+	
+	print "$round\t$r\t$members{$r}{name}\t$results{$r}{score}\t$diffD\t$diffV\n";
+	for my $k (@sorted) { 
+		print "\tP\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\n";
+	}
+	for my $v (@wrongVoting) { 
+		print "\tV\t$v->{id}\t$v->{name}\t$v->{from}\t$v->{to}\n";	
+	}
+		
 }
 createInputFile("input.txt.end");
 copy("input.txt.begin", "input.txt");
+
+
 
 sub min
 {

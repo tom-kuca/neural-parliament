@@ -7,7 +7,7 @@ columnId = 1;
 % nekam se ulozi natrenovana neuronoa sit
 
 % shoda s poslancem
-disp '0.985';
+fprintf(1,'%f\n', rand());
 
 end
 

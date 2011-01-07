@@ -9,3 +9,4 @@ fi;
 
 ./generate-votes.pl $1 $2 > input.txt;
 ./generate-members.pl $1 > members.txt;
+./generate-votings.pl > votings.txt;

@@ -54,7 +54,7 @@ if ( exists($ARGV[0]) ) {
 
 my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 
-for my $round ( 1 .. ($memberCount) ) { 
+for my $round ( 1 .. ($limit) ) { 
 	# vytvor prikazy pro jednotlive poslance
 
 	my @commands = ();

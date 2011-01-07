@@ -1,4 +1,4 @@
-%function ga(  )
+function ga(  )
 
 columnId = 19;
 
@@ -27,7 +27,7 @@ hits_pct = (total-miss) / total;
 % nekam se ulozi natrenovana neuronoa sit
 
 % shoda site s poslancem
-hits_pct
+fprintf(1,'%f\n', hits_pct);
 
-%end
+end
 

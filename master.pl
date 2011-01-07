@@ -45,8 +45,14 @@ while ( <$fh> ) {
 	$members{$memberCount} = {'name' => $_, 'type' => 0};
 }
 
-my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 
+
+my $limit = $memberCount;
+if ( exists($ARGV[0]) ) {
+	$limit = int($ARGV[0]);
+}
+
+my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 
 for my $round ( 1 .. ($memberCount) ) { 
 	# vytvor prikazy pro jednotlive poslance

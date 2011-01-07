@@ -1,6 +1,6 @@
-columnId = 5;
-file =  strcat('trained_net_', int2str(columnId),'.mat')
-load(file)
+columnId = 1;
+
+load trained_net
 
 % Nahodna neuronova sit
 %

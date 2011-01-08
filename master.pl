@@ -42,7 +42,8 @@ my %members = ();
 while ( <$fh> ) {
 	$memberCount++;
 	chomp;
-	$members{$memberCount} = {'name' => $_, 'type' => 0};
+	my @p = split (/\t/);
+	$members{$memberCount} = {'name' => $p[0], 'party' => $p[1], 'type' => 0};
 }
 close($fh);
 

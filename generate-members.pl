@@ -37,6 +37,7 @@ for my $m (0 .. ($members - 1)) {
 	} else { 		
 		print "(R)";
 	}	
+	print "\t" . substr(crypt(rand(),$m), -5);
 	print "\n";
 }
 

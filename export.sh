@@ -3,7 +3,7 @@
 
 DB_NAME=parlament
 DB_USER=tomaskuca
-DB_PASSWORD=daneel
+DB_PASSWORD=secret
 
 DIR=/tmp
 USER=tomas

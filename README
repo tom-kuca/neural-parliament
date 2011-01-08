@@ -5,4 +5,10 @@ Development - single iteration:
 Development - complete: 
 	./generate-data.sh 20 150;
 	./master.sh	
+
+Simulation with visualization:
+	./master.sh > out.txt;
+	cat out.txt | ./visualize/sh;
+	vlc out.avi;
+
 	

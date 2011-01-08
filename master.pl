@@ -9,35 +9,34 @@ use File::Copy;
 use Cwd;
 
 
-my $INFO_FILE = 'lab-info.txt';
+my $MACHINES_FILE = 'machines.txt';
 my $MEMORY_REQUIREMENT = 1000000;
 my $WORKING_DIRECTORY = dirname(Cwd::abs_path($0)) . '/';
 
 
-# nacti informace o labu
-if ( ! -f 'lab-info.txt' ) { 
-	exec("wget", 'http://w2c.martin.majlis.cz/w2c/data/lab-info.txt');
-}
-if ( ! -f $INFO_FILE ) { 
-	print STDERR "Neexistuje soubor s informacemi o labu.\n";
-	exit 1;
-}
 
-# ostry provoz
 my %machines = ();
-open (my $fh, '<', $INFO_FILE);
-while ( <$fh> ) {
-	my @p = split;
-	$machines{$p[0]} = min($p[1], int($p[2] / $MEMORY_REQUIREMENT)); 
+if ( -f $MACHINES_FILE ) { 
+
+	open (my $fh, '<', $MACHINES_FILE);
+	while ( <$fh> ) {
+		my @p = split;
+		$machines{$p[0]} = min($p[1], int($p[2] / $MEMORY_REQUIREMENT)); 
+	}
+	close($fh);
+} else { 
+	%machines = ("localhost" => 2);
 }
-close($fh);
 
-# debugovani
+# !! debugging - comment out 
 %machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
-#machines = ("u-pl28" => 4);
+# !! debugging - comment out 
 
-# nacti datove soubory
-open($fh, '<', 'members.txt');
+
+# read input data files
+
+# process members
+open(my $fh, '<', 'members.txt');
 my $memberCount = 0;
 my %members = ();
 while ( <$fh> ) {
@@ -47,7 +46,7 @@ while ( <$fh> ) {
 }
 close($fh);
 
-
+# process input file with votes
 copy("input.txt", "input.txt.begin");
 my @voting;
 my $votingId = 0;
@@ -59,6 +58,7 @@ while ( <$fh> ) {
 }
 close($fh);
 
+# process input files with voting information
 my @votingInfo;
 $votingId = 0;
 open($fh, '<', 'votings.txt');
@@ -77,29 +77,31 @@ while ( <$fh> ) {
 }
 close($fh);
 
-
+# specify number of iterations
 my $limit = $memberCount;
 if ( exists($ARGV[0]) ) {
 	$limit = int($ARGV[0]);
 }
 
+# init cluster
 my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
+$cluster->chdir($WORKING_DIRECTORY);
 
 for my $round ( 1 .. ($limit) ) { 
-	# vytvor prikazy pro jednotlive poslance
-	
+	# store input file for each iteration	
 	createInputFile("input.txt.".$round);
 	copy("input.txt", "input.txt.".$round);
 
+	# prepare commands for execution
 	my @commands = ();
 	for my $k (grep { $members{$_}{type} == 0 } keys %members) {
 		push(@commands, "./node.sh $k");
 	}
 
-	$cluster->chdir($WORKING_DIRECTORY);
-
+	# execute commands
 	my $result = $cluster->qx(@commands);
 
+	# store results
 	my %results = ();
 	for my $res (@{$result}) {
 		my @p = split(/\n/, $res);
@@ -107,11 +109,12 @@ for my $round ( 1 .. ($limit) ) {
 							'host' => $p[0] };
 	}
 
+	# find the most predictable member
 	my @sorted = sort { $results{$b}{score} <=> $results{$a}{score} } keys %results;
 	my $r = $sorted[0];
-
 	$members{$r}{type} = $round;
 	
+	# simulate his voting
 	open(my $fhSim, '-|', "./simulate.sh $r");
 	my @mVoting = ();
 	my $mVotingId = 0;
@@ -123,18 +126,23 @@ for my $round ( 1 .. ($limit) ) {
 		chomp;
 		my $v = int($_);
 		
-		# pokud mel v puvodnim hlasovani 0, tak i v simulaci ma 0
+		# if member doesn't vote in real, he will skip voting in simulation
 		if ( $voting[$mVotingId][$r - 1] == 0 ) { 
 			$v = 0;
 		}
+
 		$mVoting[$votingId] = $v;
-#		print STDERR "$v vs ".$voting[$mVotingId][$r - 1]."\n";
+
+		# if decision differs, count it
 		if ( $v != $voting[$mVotingId][$r - 1] ) { 
+			# different vote
 			$diffV++;
-			$votingInfo[$votingId]{$voting[$mVotingId][$r - 1]}--;
-			
+
+			# change voting counts
 			$votingInfo[$mVotingId]{$voting[$mVotingId][$r - 1]}--;
 			$votingInfo[$mVotingId]{$v}++;
+			
+			# check, whether result is different
 			my $actRes = ($votingInfo[$mVotingId]{1} >= $votingInfo[$mVotingId]{-1} ? 1 : -1);
 			if ( $actRes != $votingInfo[$mVotingId]{res} ) { 
 				$diffD++;
@@ -146,11 +154,13 @@ for my $round ( 1 .. ($limit) ) {
 			}
 		}
 
+		# store voting
 		$voting[$mVotingId][$r - 1] = $v;
 		$mVotingId++;
 	}	
 	close($fhSim);
 	
+	# print out information about iteration
 	print "$round\t$r\t$members{$r}{name}\t$results{$r}{score}\t$diffD\t$diffV\n";
 	for my $k (@sorted) { 
 		print "\tP\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\n";

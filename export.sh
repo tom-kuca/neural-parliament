@@ -1,15 +1,6 @@
 #!/bin/bash
 
 
-if [ $# != 1 ]
-then
-    echo "Export voting data from database to files votings.txt members.txt input.txt"
-    echo "Usage: $0 period"
-    exit
-fi
-
-PERIOD=$1
-
 DB_NAME=parlament
 DB_USER=tomaskuca
 DB_PASSWORD=daneel
@@ -17,58 +8,76 @@ DB_PASSWORD=daneel
 DIR=/tmp
 USER=tomas
 
-VOTINGS=$DIR/votings.txt
-MEMBERS=$DIR/members.txt
-RESULTS=$DIR/input.txt
+VOTINGS=votings.txt
+MEMBERS=members.txt
+RESULTS=input.txt
 
+for PERIOD in `seq 1 12`; do  
 # Seznam poslanců
-members_query="
-SELECT 
-    CONCAT(member.name, ' (', party.shortcut, ')'),
-    member.id 
-FROM 
-    parlament_member member 
-    JOIN parlament_party party ON partyId = party.id 
-WHERE member.period IN ($PERIOD)
-GROUP BY member.officialId
-INTO OUTFILE '$MEMBERS'
-  FIELDS TERMINATED BY '\t' 
-  LINES TERMINATED BY '\n';
-"
-
-# Seznam hlasování
-votings_query="
-SELECT 
-    id, name, need, a, n, (total - a - n) AS O 
-FROM parlament_voting
-WHERE period IN ($PERIOD)
-INTO OUTFILE '$VOTINGS'
-  FIELDS TERMINATED BY '\t' 
-  LINES TERMINATED BY '\n';
-"
-
-# Výsledky jednotlivých hlasování
-results_query="
-SELECT 
-    GROUP_CONCAT(IF(vote = 0, -1, IF(vote=1, 1, 0)) ORDER BY memberId) 
-FROM parlament_result result
-JOIN parlament_voting voting ON result.votingId = voting.id
-WHERE period IN ($PERIOD)
-GROUP BY votingId
-INTO OUTFILE '$RESULTS'
+    members_query="
+    SELECT 
+        member.name, 
+        party.shortcut
+    FROM 
+        parlament_member member 
+        JOIN parlament_party party ON partyId = party.id 
+    WHERE member.period IN ($PERIOD)
+    GROUP BY member.officialId
+    ORDER BY member.id
+    INTO OUTFILE '$DIR/$MEMBERS'
     FIELDS TERMINATED BY '\t' 
     LINES TERMINATED BY '\n';
-"
+    "
+
+# Seznam hlasování
+    votings_query="
+    SELECT 
+        id, name, need, a, n, (total - a - n) AS O 
+    FROM parlament_voting
+    WHERE period IN ($PERIOD)
+    INTO OUTFILE '$DIR/$VOTINGS'
+    FIELDS TERMINATED BY '\t' 
+    LINES TERMINATED BY '\n';
+    "
+
+# Výsledky jednotlivých hlasování
+    results_query="
+    SELECT 
+        GROUP_CONCAT(IF(vote = 0, -1, IF(vote=1, 1, 0)) ORDER BY memberId) 
+    FROM 
+          parlament_voting voting 
+          CROSS JOIN (
+            SELECT
+                id,
+                name,
+                period
+            FROM 
+                parlament_member
+            WHERE period = 11
+            GROUP BY officialId
+        ) member ON member.period = voting.period
+        LEFT JOIN parlament_result result ON result.votingId = voting.id AND result.memberId = member.id
+    WHERE voting.period IN (11) 
+    GROUP BY voting.id
+
+
+    INTO OUTFILE '$DIR/$RESULTS'
+        FIELDS TERMINATED BY '\t' 
+        LINES TERMINATED BY '\n';
+    "
 
 # Odstranit stare soubory
-rm -f $RESULTS $VOTINGS $MEMBERS
+    rm -f $DIR/$RESULTS $DIR/$VOTINGS $DIR/$MEMBERS
 
-echo "$members_query $votings_query $results_query" | mysql -D $DB_NAME -u $DB_USER -p$DB_PASSWORD
+    echo "$members_query $votings_query $results_query" | mysql -D $DB_NAME -u $DB_USER -p$DB_PASSWORD
 
 # Vytvorene soubory maji vlastnika mysql
-sudo chown $USER $RESULTS $VOTINGS $MEMBERS
+    sudo chown $USER $DIR/$RESULTS $DIR/$VOTINGS $DIR/$MEMBERS
 
 # Separator v GROUP_CONCAT z neznamych duvodu nefunguje (nechava krome tabu jeste '\', 
 # proto rucne nahradime ',' za '\t'
-sed -ri 's/,/\t/g' $RESULTS
+    sed -ri 's/,/\t/g' $DIR/$RESULTS
+
+    tar -czf voting_$PERIOD.tar.gz -C $DIR $RESULTS $VOTINGS $MEMBERS
+done
 

@@ -57,7 +57,7 @@ for PERIOD in `seq 1 12`; do
             GROUP BY officialId
         ) member ON member.period = voting.period
         LEFT JOIN parlament_result result ON result.votingId = voting.id AND result.memberId = member.id
-    WHERE voting.period IN ($PERIOD)) 
+    WHERE voting.period IN ($PERIOD) 
     GROUP BY voting.id
 
 

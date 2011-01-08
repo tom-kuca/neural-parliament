@@ -106,8 +106,10 @@ for my $round ( 1 .. ($limit) ) {
 	my %results = ();
 	for my $res (@{$result}) {
 		my @p = split(/\n/, $res);
-		$results{$p[1]} = { 'score' => $p[2],
-							'host' => $p[0] };
+		$results{$p[1]} = { 'score' => $p[4],
+							'host' => $p[0],
+							'time' => $p[3] - $p[2],
+	 };
 	}
 
 	# find the most predictable member
@@ -164,7 +166,7 @@ for my $round ( 1 .. ($limit) ) {
 	# print out information about iteration
 	print "$round\t$r\t$members{$r}{name}\t$results{$r}{score}\t$diffD\t$diffV\n";
 	for my $k (@sorted) { 
-		print "\tP\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\n";
+		print "\tP\t$k\t$members{$k}{name}\t$results{$k}{score}\t$results{$k}{host}\t$results{$k}{time}\n";
 	}
 	for my $v (@wrongVoting) { 
 		print "\tV\t$v->{id}\t$v->{name}\t$v->{from}\t$v->{to}\n";	

@@ -340,11 +340,11 @@ sub processResultThrow
 			$map{$m}++;
 		}
 		my $diff = 0;
-		$diff += $votingInfo[$v]{-1} - $map{-1};
-		$diff += $votingInfo[$v]{1} - $map{1};
+		$diff += abs($votingInfo[$v]{-1} - $map{-1});
+		$diff += abs($votingInfo[$v]{1} - $map{1});
 		$diffV += $diff;
 
-		my $actRes = ($map{1} >= $map{-1} ? 1 : -1);
+		my $actRes = ($map{1} >= $votingInfo[$v]{req} ? 1 : -1);
 		if ( $votingInfo[$v]{res} != $actRes ) { 
 			$diffD++;
 			push(@wrongVoting, { 'id' => $votingInfo[$v]{id}, 
@@ -353,6 +353,7 @@ sub processResultThrow
 								 'to' => $actRes }
 			);
 		}
+		#print "$v\t$diff\t$diffV\t$diffD\n";
 	}
 }
 

@@ -1,5 +1,5 @@
 % Cislo sloupce, pro ktery chceme natrenovat sit
-columnId = 3;
+columnId = 1;
 
 % Nacist vstupni data
 load input.txt
@@ -11,20 +11,19 @@ num_voters = length(input(1,:));
 %       trenovaci data - odebere se sloupec columnId
 %       spravne vysledky - sloupec ColumnId
 voting = [input(:, 1:columnId-1) input(:, (columnId+1):num_voters)]';
-result = input(:, columnId)';
+result = input(:, columnId)'
 
 % Vytvorit neuronovou sit
+net=newff(voting,result,[10],{},'trainrp');
 
-net=newff(voting,result,[100],{},'traingdm');
-%net.trainParam.lr = 0.01;
-net.trainParam.epochs = 1000;
+net.trainParam.epochs = 5;
 net.trainParam.goal = 0.01;
-net.trainParam.max_fail = 20;
+net.trainParam.max_fail = 10;
 
 % natrenovat neuronovou sit
 %
 [trained_net,tr]=train(net,voting,result);
-simulation = hardlims(sim(trained_net, voting));
+simulation = hardlims(sim(trained_net, voting))
 
 % natrenovana sit se ulozi do soubor net.4.mat (4 je columnId)
 save trained_net;

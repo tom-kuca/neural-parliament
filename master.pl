@@ -8,6 +8,7 @@ use File::Basename;
 use File::Copy;
 use Cwd;
 
+BEGIN { $| = 1 }
 
 my $MACHINES_FILE = 'machines.txt';
 my $MEMORY_REQUIREMENT = 1000000;

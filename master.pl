@@ -29,7 +29,7 @@ if ( -f $MACHINES_FILE ) {
 }
 
 # !! debugging - comment out 
-# %machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
+%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
 # !! debugging - comment out 
 
 
@@ -201,7 +201,6 @@ for my $round ( 1 .. ($limit) ) {
 	print "$round\t$bestReal\t$members{$bestReal}{name}\t$results{$bestReal}{score}\t$diffD\t$diffV\n";
 	for my $k (@sorted) { 
 		my $actK = $membersMapping{$round - 1}{$k};
-		print "$k => $actK\t";
 		print "\tP\t$actK\t$members{$actK}{name}\t$results{$k}{score}\t$results{$k}{host}\t$results{$k}{time}\n";
 	}
 	for my $v (@wrongVoting) { 
@@ -364,9 +363,9 @@ sub simulateThrow
 
 
 
-	copy('trained_net_turn_' . $turn . '.mat', 'trained_net_' . $mId . '.mat');
+	copy('trained_net_turn_' . $turn . '.mat', 'trained_net_' . ($mId+1) . '.mat');
 	
-	open(my $fhSim, '-|', "./simulate.sh $mId");
+	open(my $fhSim, '-|', "./simulate.sh " . ( $mId + 1));
 	my @mVoting = ();
 	my $mVotingId = 0;
 

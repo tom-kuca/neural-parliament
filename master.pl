@@ -12,7 +12,7 @@ use Cwd;
 my $MACHINES_FILE = 'machines.txt';
 my $MEMORY_REQUIREMENT = 1000000;
 my $WORKING_DIRECTORY = dirname(Cwd::abs_path($0)) . '/';
-
+my $DEBUG = 0;
 
 
 my %machines = ();
@@ -29,7 +29,7 @@ if ( -f $MACHINES_FILE ) {
 }
 
 # !! debugging - comment out 
-%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
+#%machines = ("u-pl28" => 3, "u-pl29" => 3, 'u-pl1' => 7, 'u-pl2'=> 7, 'u-pl3' => 7);
 # !! debugging - comment out 
 
 
@@ -131,7 +131,9 @@ for my $round ( 1 .. ($limit) ) {
 	my @commands = ();
 	for my $k (sort grep { $members{$_}{type} == 0 } keys %members) {
 		my $command = "./node.sh $mappingR2A{$k}";
-		print STDERR "\tCommand: $command\n";
+		if ( $DEBUG ) {
+			print STDERR "\tCommand: $command\n";
+		}
 		push(@commands, $command);
 	}
 
@@ -153,18 +155,22 @@ for my $round ( 1 .. ($limit) ) {
 	my $bestAct  = $sorted[0];
 	my $bestReal = $membersMapping{$round-1}{$bestAct};
 
-	print STDERR "Best: $bestAct\n";
+	if ( $DEBUG ) {
+		print STDERR "Best: $bestAct\n";
+	}
 
 	$membersWinning{$round} = $bestAct;
 	if ( $strategy eq 'keep' ) { 
 		$membersMapping{$round} = $membersMapping{$round-1};
 	} elsif ( $strategy eq 'throw' ) { 
 		my $delta = 0;
-		print STDERR "Mapping BEF: ";
-		for my $k (sort keys %{$membersMapping{$round-1}}) { 
-			print STDERR "$k => " . $membersMapping{$round-1}{$k} . ", ";
+		if ( $DEBUG ) { 
+			print STDERR "Mapping BEF: ";
+			for my $k (sort keys %{$membersMapping{$round-1}}) { 
+				print STDERR "$k => " . $membersMapping{$round-1}{$k} . ", ";
+			}
+			print STDERR "\n";
 		}
-		print STDERR "\n";
 
 		for my $k (sort keys %{$membersMapping{$round-1}}) { 
 			$membersMapping{$round}{$k-$delta} = $membersMapping{$round-1}{$k};
@@ -174,12 +180,13 @@ for my $round ( 1 .. ($limit) ) {
 				$delta = 1;
 			}
 		}
-
-		print STDERR "Mapping AFT: ";
-		for my $k (sort keys %{$membersMapping{$round}}) { 
-			print STDERR "$k => " . $membersMapping{$round}{$k} . ", ";
+		if ( $DEBUG ) { 
+			print STDERR "Mapping AFT: ";
+			for my $k (sort keys %{$membersMapping{$round}}) { 
+				print STDERR "$k => " . $membersMapping{$round}{$k} . ", ";
+			}
+			print STDERR "\n";
 		}
-		print STDERR "\n";
 	}	
 
 
@@ -198,7 +205,7 @@ for my $round ( 1 .. ($limit) ) {
 	}
 	
 	# print out information about iteration
-	print "$round\t$bestReal\t$members{$bestReal}{name}\t$results{$bestReal}{score}\t$diffD\t$diffV\n";
+	print "$round\t$bestReal\t$members{$bestReal}{name}\t$results{$bestAct}{score}\t$diffD\t$diffV\n";
 	for my $k (@sorted) { 
 		my $actK = $membersMapping{$round - 1}{$k};
 		print "\tP\t$actK\t$members{$actK}{name}\t$results{$k}{score}\t$results{$k}{host}\t$results{$k}{time}\n";
@@ -287,7 +294,6 @@ sub processResultKeep
 sub processResultThrow
 {
 	my ($round, $r) = @_;
-	print STDERR "processResultThrow\n";
 
 	# simulate his voting
 	copy('trained_net_' . $r . '.mat', 'trained_net_turn_' . $round . '.mat');	
@@ -336,9 +342,10 @@ sub removeInputColumn
 	my $colId = shift;
 	$colId--;
 
-	print STDERR "Del: $colId\n";
-	
-	print STDERR "Bef:\t" . join("\t", @{$voting[0]}) . "\n";
+	if ( $DEBUG ) { 
+		print STDERR "Del: $colId\n";
+		print STDERR "Bef:\t" . join("\t", @{$voting[0]}) . "\n";
+	}
 
 	my @votingB = map { [@$_] } @voting;
 	@voting = ();
@@ -350,7 +357,10 @@ sub removeInputColumn
 			}
 		}
 	}
-	print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";
+
+	if ( $DEBUG ) { 
+		print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";
+	}
 }
 
 
@@ -358,10 +368,11 @@ sub simulateThrow
 {
 	my ($round, $turn) = @_;
 	my $mId = $membersWinning{$turn} - 1;
-	print STDERR "Simulate Turn: $turn, Member: $mId\n";
-	print STDERR "Bef:\t" . join("\t", @{$voting[0]}) . "\n";
 
-
+	if ( $DEBUG ) { 
+		print STDERR "Simulate Turn: $turn, Member: $mId\n";
+		print STDERR "Bef:\t" . join("\t", @{$voting[0]}) . "\n";
+	}
 
 	copy('trained_net_turn_' . $turn . '.mat', 'trained_net_' . ($mId+1) . '.mat');
 	
@@ -417,9 +428,9 @@ sub simulateThrow
 			$voting[$v][@{$voting[$v]}] = $old;
 		}		
 	}
-	print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";
 
-
-	
+	if ( $DEBUG ) {
+		print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";	
+	}
 }
 

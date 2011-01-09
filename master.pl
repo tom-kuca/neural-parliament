@@ -141,7 +141,7 @@ for my $round ( 1 .. ($limit) ) {
 	print STDERR time() . "\tRound: $round\n";
 	# store input file for each iteration	
 	createInputFile("input.txt.".$round);
-	copy("input.txt", "input.txt.".$round);
+	copy("input.txt".$round, "input.txt");
 
 	# prepare commands for execution
 	my @commands = ();
@@ -355,6 +355,10 @@ sub processResultThrow
 			);
 		}
 		#print "$v\t$diff\t$diffV\t$diffD\n";
+	}
+	
+	for my $k (@keys) { 
+		removeInputColumn($membersWinning{$k});	
 	}
 }
 

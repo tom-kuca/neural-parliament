@@ -141,7 +141,7 @@ for my $round ( 1 .. ($limit) ) {
 	print STDERR time() . "\tRound: $round\n";
 	# store input file for each iteration	
 	createInputFile("input.txt.".$round);
-	copy("input.txt".$round, "input.txt");
+	copy("input.txt.".$round, "input.txt") or die "Copy failed: $!";
 
 	# prepare commands for execution
 	my @commands = ();

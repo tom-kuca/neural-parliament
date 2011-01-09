@@ -119,6 +119,16 @@ my $diffV = 0;
 my $diffD = 0;
 my @wrongVoting = ();
 
+print STDERR "Machines: \n";
+for my $m (sort keys %machines) { 
+	print STDERR "\t$m\t$machines{$m}\n";
+}
+
+print STDERR "\n";
+print STDERR "Limit: $limit\n";
+print STDERR "Strategy: $strategy\n";
+print STDERR "\n";
+
 print STDERR time() . "\tCluster INIT - BEGIN\n";
 # init cluster
 my $cluster = GRID::Cluster->new(max_num_np => \%machines,);

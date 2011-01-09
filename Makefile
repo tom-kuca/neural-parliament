@@ -6,7 +6,7 @@ machines.txt:
 
 # Pocet spustenych node.sh na jednotlivych serverech
 status: machines.txt
-	for i in `cat machines.txt | cut -f1`; do echo -n "$$i: "; ssh $$i ' ps -U kucat5am | grep node.sh | wc -l'; done
+	for i in `cat machines.txt | cut -f1`; do echo -n "$$i: "; ssh $$i ' ps -U `whoami` | grep node.sh | wc -l'; done
 
 
 clean:

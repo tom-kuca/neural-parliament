@@ -36,7 +36,7 @@ if ( -f $MACHINES_FILE ) {
 # read input data files
 
 # process members
-open(my $fh, '<', 'members.txt');
+open(my $fh, '<', 'members.txt') or die ('Missing input file members.txt');
 my $memberCount = 0;
 my %members = ();
 my %membersWinning = ();
@@ -57,7 +57,7 @@ copy("input.txt", "input.txt.begin");
 my @voting;
 my @votingO;
 my $votingId = 0;
-open($fh, '<', 'input.txt');
+open($fh, '<', 'input.txt') or die ('Missing input file input.txt');
 while ( <$fh> ) {
 	chomp;	
 	my @p = map(int, split);
@@ -71,7 +71,7 @@ close($fh);
 my @votingInfo;
 my @votingInfoO;
 $votingId = 0;
-open($fh, '<', 'votings.txt');
+open($fh, '<', 'votings.txt') or die ('Missing input file votings.txt');
 while ( <$fh> ) {
 	chomp;	
 	my @p = split (/\t/);
@@ -95,7 +95,11 @@ close($fh);
 # specify number of iterations
 my $limit = $memberCount;
 if ( exists($ARGV[0]) ) {
-	$limit = int($ARGV[0]);
+	if ( $ARGV[0] eq 'keep' || $ARGV[0] eq 'throw' ) { 
+		$ARGV[1] = $ARGV[0];
+	} else { 
+		$limit = int($ARGV[0]);
+	}
 }
 if ( $limit > $memberCount ) { 
 	$limit = $memberCount;
@@ -111,18 +115,29 @@ if ( $strategy ne 'keep' && $strategy ne 'throw' ) {
 	exit(2);
 }
 
-
 my $diffV = 0;
 my $diffD = 0;
 my @wrongVoting = ();
 
+print STDERR "Machines: \n";
+for my $m (sort keys %machines) { 
+	print STDERR "\t$m\t$machines{$m}\n";
+}
 
+print STDERR "\n";
+print STDERR "Limit: $limit\n";
+print STDERR "Strategy: $strategy\n";
+print STDERR "\n";
+
+print STDERR time() . "\tCluster INIT - BEGIN\n";
 # init cluster
 my $cluster = GRID::Cluster->new(max_num_np => \%machines,);
 $cluster->chdir($WORKING_DIRECTORY);
+print STDERR time() . "\tCluster INIT - END\n";
 
 for my $round ( 1 .. ($limit) ) { 
-	print STDERR "Round: $round\n";
+	print STDERR "\nRound: $round\n";
+	print STDERR time() . "\tRound: $round\n";
 	# store input file for each iteration	
 	createInputFile("input.txt.".$round);
 	copy("input.txt", "input.txt.".$round);
@@ -138,7 +153,9 @@ for my $round ( 1 .. ($limit) ) {
 	}
 
 	# execute commands
+	print STDERR time() . "\tEXECUTE - BEGIN\n";
 	my $result = $cluster->qx(@commands);
+	print STDERR time() . "\tEXECUTE - END\n";
 
 	# store results
 	my %results = ();
@@ -198,11 +215,13 @@ for my $round ( 1 .. ($limit) ) {
 	$diffD = 0;
 	@wrongVoting = ();
 
+	print STDERR time() . "\tPROCESS RESULTS - BEGIN\n";
 	if ( $strategy eq 'keep' ) { 
 		processResultKeep($bestReal);
 	} elsif ( $strategy eq 'throw' ) { 
 		processResultThrow($round, $bestAct);
 	}
+	print STDERR time() . "\tPROCESS RESULTS - END\n";
 	
 	# print out information about iteration
 	print "$round\t$bestReal\t$members{$bestReal}{name}\t$results{$bestAct}{score}\t$diffD\t$diffV\n";

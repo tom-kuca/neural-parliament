@@ -23,7 +23,7 @@ for PERIOD in `seq 1 12`; do
         JOIN parlament_party party ON partyId = party.id 
     WHERE member.period IN ($PERIOD)
     GROUP BY member.officialId
-    ORDER BY member.id
+    ORDER BY member.officialId
     INTO OUTFILE '$DIR/$MEMBERS'
     FIELDS TERMINATED BY '\t' 
     LINES TERMINATED BY '\n';
@@ -33,8 +33,9 @@ for PERIOD in `seq 1 12`; do
     votings_query="
     SELECT 
         id, name, need, a, n, (total - a - n) AS O 
-    FROM parlament_voting
+    FROM parlament_voting voting
     WHERE period IN ($PERIOD)
+    ORDER BY voting.id
     INTO OUTFILE '$DIR/$VOTINGS'
     FIELDS TERMINATED BY '\t' 
     LINES TERMINATED BY '\n';
@@ -43,22 +44,21 @@ for PERIOD in `seq 1 12`; do
 # Výsledky jednotlivých hlasování
     results_query="
     SELECT 
-        GROUP_CONCAT(IF(vote = 0, -1, IF(vote=1, 1, 0)) ORDER BY memberId) 
-    FROM 
-          parlament_voting voting 
-          CROSS JOIN (
-            SELECT
-                id,
-                name,
-                period
-            FROM 
-                parlament_member
-            WHERE period IN ($PERIOD)
-            GROUP BY officialId
-        ) member ON member.period = voting.period
-        LEFT JOIN parlament_result result ON result.votingId = voting.id AND result.memberId = member.id
-    WHERE voting.period IN ($PERIOD) 
+        GROUP_CONCAT(IF(vote = 0, -1, IF(vote=1, 1, 0)) ORDER BY officialId) 
+    FROM (
+        SELECT 
+            voting.id,
+           MIN(vote) AS vote,
+           officialId AS officialId
+        FROM 
+            parlament_voting voting 
+            CROSS JOIN parlament_member member ON member.period = voting.period
+            LEFT JOIN parlament_result result ON result.votingId = voting.id AND result.memberId = member.id 
+        WHERE voting.period IN ($PERIOD)
+        GROUP BY voting.id, member.officialId
+    ) voting
     GROUP BY voting.id
+    ORDER BY voting.id
 
 
     INTO OUTFILE '$DIR/$RESULTS'

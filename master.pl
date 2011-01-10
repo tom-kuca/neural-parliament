@@ -51,6 +51,7 @@ while ( <$fh> ) {
 	$membersMapping{0}{$memberCount} = $memberCount;
 	$mappingR2A{$memberCount} = $memberCount;
 }
+$membersMapping{0}{$memberCount+1} = 'D';
 close($fh);
 
 # process input file with votes
@@ -102,8 +103,8 @@ if ( exists($ARGV[0]) ) {
 		$limit = int($ARGV[0]);
 	}
 }
-if ( $limit > $memberCount ) { 
-	$limit = $memberCount;
+if ( $limit >= $memberCount ) { 
+	$limit = $memberCount-1;
 }
 
 # specify strategy
@@ -145,7 +146,7 @@ for my $round ( 1 .. ($limit) ) {
 
 	# prepare commands for execution
 	my @commands = ();
-	for my $k (sort grep { $members{$_}{type} == 0 } keys %members) {
+	for my $k (sort { $a <=> $b }  grep { $members{$_}{type} == 0 } keys %members) {
 		my $command = "./node.sh $mappingR2A{$k}";
 		if ( $DEBUG ) {
 			print STDERR "\tCommand: $command\n";
@@ -181,26 +182,32 @@ for my $round ( 1 .. ($limit) ) {
 	if ( $strategy eq 'keep' ) { 
 		$membersMapping{$round} = $membersMapping{$round-1};
 	} elsif ( $strategy eq 'throw' ) { 
-		my $delta = 0;
 		if ( $DEBUG ) { 
 			print STDERR "Mapping BEF: ";
-			for my $k (sort keys %{$membersMapping{$round-1}}) { 
+			for my $k (1 .. ($memberCount-$round+1)) { 
 				print STDERR "$k => " . $membersMapping{$round-1}{$k} . ", ";
 			}
 			print STDERR "\n";
 		}
 
-		for my $k (sort keys %{$membersMapping{$round-1}}) { 
-			$membersMapping{$round}{$k-$delta} = $membersMapping{$round-1}{$k};
-			$mappingR2A{$membersMapping{$round}{$k-$delta}} = $k - $delta;
-
+		my $delta = 0;
+		for my $k (1 .. ($memberCount-$round+1)) { 
 			if ( $bestAct == $k ) { 
 				$delta = 1;
 			}
+			if ( $delta == 0 ) { 
+				$membersMapping{$round}{$k} = $membersMapping{$round-1}{$k};
+			} else { 
+				$membersMapping{$round}{$k} = $membersMapping{$round-1}{$k + $delta};				
+			}
+		
+			$mappingR2A{$membersMapping{$round}{$k}} = $k;
 		}
+					
+
 		if ( $DEBUG ) { 
 			print STDERR "Mapping AFT: ";
-			for my $k (sort keys %{$membersMapping{$round}}) { 
+			for my $k (1 .. ($memberCount-$round+1)) { 
 				print STDERR "$k => " . $membersMapping{$round}{$k} . ", ";
 			}
 			print STDERR "\n";
@@ -337,13 +344,35 @@ sub processResultThrow
 	# prepocitej vysledky
 	for my $v (0 .. (@voting - 1)) { 
 		my %map = (-1 => 0, 0 => 0, 1 => 0 );
-		for my $m (@{$voting[$v]}) {
-			$map{$m}++;
+		if ( $DEBUG ) { 
+			print STDERR "Voting: $v\n";
 		}
-		my $diff = 0;
-		$diff += abs($votingInfo[$v]{-1} - $map{-1});
-		$diff += abs($votingInfo[$v]{1} - $map{1});
-		$diffV += $diff;
+		for my $m (0 .. (@{$voting[$v]} - 1)) {
+			if ( $DEBUG ) {
+				print STDERR "$votingO[$v][$m] x $voting[$v][$m]\n";
+			}
+			$map{$voting[$v][$m]}++;
+		}
+		$diffV += abs($votingInfo[$v]{-1} - $map{-1});
+
+		if ( $map{0} != $votingInfo[$v]{0} ) {
+			print STDERR "!!!!!!!!!!!!!!!!!!!!!!\n";
+			print STDERR "ERROR IN VOTE COUNTING\n";
+			print STDERR "Voting: $v\n";
+			print STDERR "-1: ".$votingInfo[$v]{-1}.' x '.$map{-1}."; ";
+			print STDERR "0: ".$votingInfo[$v]{0}.' x '.$map{0}."; ";
+			print STDERR "1: ".$votingInfo[$v]{1}.' x '.$map{1}."\n";
+			if ( $DEBUG ) { 
+				die("Error in vote counting.");
+			}
+		}
+
+		if ( $DEBUG ) {
+			print STDERR sprintf("[%3d]: ", $diffV);
+			print STDERR "-1: ".$votingInfo[$v]{-1}.' x '.$map{-1}."; ";
+			print STDERR "0: ".$votingInfo[$v]{0}.' x '.$map{0}."; ";
+			print STDERR "1: ".$votingInfo[$v]{1}.' x '.$map{1}."\n";
+		}
 
 		my $actRes = ($map{1} >= $votingInfo[$v]{req} ? 1 : -1);
 		if ( $votingInfo[$v]{res} != $actRes ) { 
@@ -384,7 +413,11 @@ sub removeInputColumn
 	}
 
 	if ( $DEBUG ) { 
-		print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";
+#		if ( @{$voting[0]} ) { 
+#			print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";
+#		} else { 
+#			print STDERR "After:\tEMPTY\n";
+#		}
 	}
 }
 
@@ -393,9 +426,10 @@ sub simulateThrow
 {
 	my ($round, $turn) = @_;
 	my $mId = $membersWinning{$turn} - 1;
+	my $mappedId = $membersMapping{$turn-1}{$mId+1}-1;
 
 	if ( $DEBUG ) { 
-		print STDERR "Simulate Turn: $turn, Member: $mId\n";
+		print STDERR "Simulate Turn: $turn, Member: $mId, Mapped: $mappedId\n";
 		print STDERR "Bef:\t" . join("\t", @{$voting[0]}) . "\n";
 	}
 
@@ -410,8 +444,12 @@ sub simulateThrow
 		my $v = int($_);
 		
 		# if member doesn't vote in real, he will skip voting in simulation
-		if ( $votingO[$mVotingId][$membersMapping{$turn-1}{$mId+1}-1] == 0 ) { 
+		my $orig = $votingO[$mVotingId][$mappedId]; 
+		if ( $orig == 0 ) { 
 			$v = 0;
+		}
+		if ( $DEBUG ) {
+			print STDERR "\tS: ". int($_)."\tO: " . $orig . "\tR: " . $v . "\n";
 		}
 #		$mVoting[$mVotingId] = 'S['.$turn.']'.$v;
 		$mVoting[$mVotingId] = $v;
@@ -443,8 +481,8 @@ sub simulateThrow
 						$voting[$v][$m] = $new;				
 					} else { 
 						$voting[$v][$m] = $old;
+						$old = $new;
 					}
-					$old = $new;
 				}
 			}
 			if ( ! defined($old) ) { 

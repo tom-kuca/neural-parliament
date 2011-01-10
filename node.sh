@@ -6,9 +6,6 @@ actDir=`dirname $self`;
 config=${actDir}/config.sh;
 source ${config};
 
-echo $DEVEL;
-exit;
-
 if [ x$1 = x ]; then 
 	echo "Usage: ./node.sh memberId";
 	exit 1;

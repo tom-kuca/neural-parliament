@@ -23,7 +23,7 @@ net.trainParam.max_fail = 10;
 % natrenovat neuronovou sit
 %
 [trained_net,tr]=train(net,voting,result);
-simulation = hardlims(sim(trained_net, voting))
+simulation = hardlims(sim(trained_net, voting));
 
 % natrenovana sit se ulozi do soubor net.4.mat (4 je columnId)
 save trained_net;
@@ -31,10 +31,12 @@ save trained_net;
 % spocitact shodu s realnym hlasovanim v procentech
 %
 % pokud poslanec nehlasoval, pak se vysledek nezapocita
-miss = sum(simulation + result == 0)
-total = sum(result ~= 0)
+miss = sum(simulation + result == 0);
+total = sum(result ~= 0);
 hits_pct = (total-miss) / total;
 
 
 % vypsat shodu s realnym hlasovanim v procentech
+fprintf(1,'%d\n', miss);
+fprintf(1,'%d\n', total);
 fprintf(1,'%f\n', hits_pct);

@@ -9,6 +9,11 @@ fi;
 dateBegin=`date '+%s.%N'`;
 columnId=$1;
 fName=ga_$columnId;
+CURDIR=`pwd`
+TMPDIR=`mktemp -d`
+cp ga.m $TMPDIR/
+cp input.txt $TMPDIR/
+cd $TMPDIR
 
 sed -r "s/^columnId = [0-9]+/columnId = $columnId/" ga.m > $fName.m;
 sed -ri "s/^function ga/function $fName/" $fName.m;
@@ -32,6 +37,8 @@ echo $dateEnd;
 cat res.$columnId;
 
 rm -rf res.${columnId} res.${columnId}.complete $fName.m;
+
+cp trained_net_${columnId}.mat $CURDIR
 
 
 

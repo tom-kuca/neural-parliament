@@ -356,17 +356,17 @@ sub processResultThrow
 		}
 		$diffV += abs($votingInfo[$v]{-1} - $map{-1});
 
-		if ( $map{0} != $votingInfo[$v]{0} ) {
-			print STDERR "!!!!!!!!!!!!!!!!!!!!!!\n";
-			print STDERR "ERROR IN VOTE COUNTING\n";
-			print STDERR "Voting: $v\n";
-			print STDERR "-1: ".$votingInfo[$v]{-1}.' x '.$map{-1}."; ";
-			print STDERR "0: ".$votingInfo[$v]{0}.' x '.$map{0}."; ";
-			print STDERR "1: ".$votingInfo[$v]{1}.' x '.$map{1}."\n";
-			if ( $DEBUG ) { 
-				die("Error in vote counting.");
-			}
-		}
+#		if ( $map{0} != $votingInfo[$v]{0} ) {
+#			print STDERR "!!!!!!!!!!!!!!!!!!!!!!\n";
+#			print STDERR "ERROR IN VOTE COUNTING\n";
+#			print STDERR "Voting: $v\n";
+#			print STDERR "-1: ".$votingInfo[$v]{-1}.' x '.$map{-1}."; ";
+#			print STDERR "0: ".$votingInfo[$v]{0}.' x '.$map{0}."; ";
+#			print STDERR "1: ".$votingInfo[$v]{1}.' x '.$map{1}."\n";
+#			if ( $DEBUG ) { 
+#				die("Error in vote counting.");
+#			}
+#		}
 
 		if ( $DEBUG ) {
 			print STDERR sprintf("[%3d]: ", $diffV);
@@ -435,7 +435,33 @@ sub simulateThrow
 	}
 
 	copy('trained_net_turn_' . $turn . '.mat', 'trained_net_' . ($mId+1) . '.mat');
-	
+
+
+	if ( $turn != $round ) {
+		for my $v (0 .. (@voting - 1)) { 
+			my $old = undef;
+			for my $m (0 .. (@{$voting[$v]} - 1)) { 
+				if ( $m == $mId ) { 
+					$old = $voting[$v][$m];
+					$voting[$v][$m] = 0;
+				} else { 
+					my $new = $voting[$v][$m];
+					if ( ! defined($old) ) { 
+						$voting[$v][$m] = $new;				
+					} else { 
+						$voting[$v][$m] = $old;
+						$old = $new;
+					}
+				}
+			}
+			if ( ! defined($old) ) { 
+				$old = 0;
+			}
+			$voting[$v][@{$voting[$v]}] = $old;
+		}
+	}
+
+	createInputFile('input.txt');	
 	open(my $fhSim, '-|', "./simulate.sh " . ( $mId + 1));
 	my @mVoting = ();
 	my $mVotingId = 0;
@@ -443,6 +469,13 @@ sub simulateThrow
 	while ( <$fhSim> ) { 
 		chomp;
 		my $v = int($_);
+		if ( $_ !~ /^(1|0|-1)/ ) {
+			print STDERR $_, "\n";
+			while (<$fhSim>) {
+				print STDERR $_;
+			}
+			die("Broken simulation");
+		}
 		
 		# if member doesn't vote in real, he will skip voting in simulation
 		my $orig = $votingO[$mVotingId][$mappedId]; 
@@ -460,7 +493,7 @@ sub simulateThrow
 	close($fhSim);
 
 	# zadny sloupec se nepridava, jen se prepisi hodnoty
-	if ( $turn == $round ) { 
+#	if ( $turn == $round ) { 
 		for my $v (0 .. (@voting - 1)) { 
 			for my $m (0 .. (@{$voting[$v]} - 1)) { 
 				if ( $m == $mId ) { 
@@ -468,30 +501,30 @@ sub simulateThrow
 				}
 			}
 		}		
-	} else { 
-
-		for my $v (0 .. (@voting - 1)) { 
-			my $old = undef;
-			for my $m (0 .. (@{$voting[$v]} - 1)) { 
-				if ( $m == $mId ) { 
-					$old = $voting[$v][$m];
-					$voting[$v][$m] = $mVoting[$v];
-				} else { 
-					my $new = $voting[$v][$m];
-					if ( ! defined($old) ) { 
-						$voting[$v][$m] = $new;				
-					} else { 
-						$voting[$v][$m] = $old;
-						$old = $new;
-					}
-				}
-			}
-			if ( ! defined($old) ) { 
-				$old = $mVoting[$v];
-			}
-			$voting[$v][@{$voting[$v]}] = $old;
-		}		
-	}
+#	} else { 
+#
+#		for my $v (0 .. (@voting - 1)) { 
+#			my $old = undef;
+#			for my $m (0 .. (@{$voting[$v]} - 1)) { 
+#				if ( $m == $mId ) { 
+#					$old = $voting[$v][$m];
+#					$voting[$v][$m] = $mVoting[$v];
+#				} else { 
+#					my $new = $voting[$v][$m];
+#					if ( ! defined($old) ) { 
+#						$voting[$v][$m] = $new;				
+#					} else { 
+#						$voting[$v][$m] = $old;
+#						$old = $new;
+#					}
+#				}
+#			}
+#			if ( ! defined($old) ) { 
+#				$old = $mVoting[$v];
+#			}
+#			$voting[$v][@{$voting[$v]}] = $old;
+#		}		
+#	}
 
 	if ( $DEBUG ) {
 		print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";	

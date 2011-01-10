@@ -11,9 +11,9 @@ fi;
 columnId=$1;
 
 fName="simulate_${columnId}";
-sed -r "s/^columnId = [0-9]+/columnId = $columnId/" simulate.m > $fName.m.1;
-sed -ri "s/trained_net/trained_net_${columnId}/" $fName.m.1 > $fName.m;
-rm -rf $fName.m.*;
+sed -r "s/^columnId = [0-9]+/columnId = $columnId/" simulate.m | \
+sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
+
 lines=`cat input.txt | wc -l`;
 linesT=`echo $(($lines + 1))`;
 
@@ -25,7 +25,4 @@ else
 fi;
 cat sim.$columnId;
 
-rm -rf sim.${columnId} sim.${columnId}.complete $fName.m;
-
-
-
+#rm -rf sim.${columnId} sim.${columnId}.complete $fName.m;

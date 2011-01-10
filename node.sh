@@ -1,6 +1,14 @@
 #!/bin/bash
 # ./node.sh memberId
-DEVEL=0;
+
+self=`readlink -f $0`;
+actDir=`dirname $self`;
+config=${actDir}/config.sh;
+source ${config};
+
+echo $DEVEL;
+exit;
+
 if [ x$1 = x ]; then 
 	echo "Usage: ./node.sh memberId";
 	exit 1;
@@ -16,18 +24,19 @@ cp ga.m $TMPDIR/
 cp input.txt $TMPDIR/
 cd $TMPDIR
 
-sed -r "s/^columnId = [0-9]+/columnId = $columnId/" ga.m | \
-sed -r "s/^function ga/function $fName/" | \
-sed -r "s/^function ga/function $fName/" | \
-sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
-
 if [ $DEVEL == 0 ]; then
+	sed -r "s/^columnId = [0-9]+/columnId = $columnId/" ga.m | \
+	sed -r "s/^function ga/function $fName/" | \
+	sed -r "s/^function ga/function $fName/" | \
+	sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
+
 	disp=`echo $((${columnId} + 20))`;
 	export DISPLAY=:${disp}
 	Xvfb :${disp} -screen 0 1024x768x16 &> /dev/null &
 	xb=`echo $!`;
 	echo "quit; " | nice -n 19 /afs/ms/@sys/bin/matlab -nodesktop -nosplash -r $fName > res.$columnId.complete;
 	kill $xb &> /dev/null;
+	cp trained_net_${columnId}.mat $CURDIR
 else
 	perl -e 'print (("\n", rand()) x 3);' > res.$columnId.complete;
 fi;
@@ -39,9 +48,6 @@ echo $columnId;
 echo $dateBegin;
 echo $dateEnd;
 cat res.$columnId;
-
-
-cp trained_net_${columnId}.mat $CURDIR
 
 rm -rf $TMPDIR       
 

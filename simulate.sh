@@ -1,7 +1,10 @@
 #!/bin/bash
 # ./simulate.sh memberId
+self=`readlink -f $0`;
+actDir=`dirname $self`;
+config=${actDir}/config.sh;
+source ${config};
 
-DEVEL=0;
 
 if [ x$1 = x ]; then 
 	echo "Usage: ./simulate.sh memberId";
@@ -9,19 +12,18 @@ if [ x$1 = x ]; then
 fi;
 
 columnId=$1;
-
 fName="simulate_${columnId}";
-sed -r "s/^columnId = [0-9]+/columnId = $columnId/" simulate.m | \
-sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
-
 lines=`cat input.txt | wc -l`;
 linesT=`echo $(($lines + 1))`;
 
 if [ $DEVEL == 0 ]; then
+	sed -r "s/^columnId = [0-9]+/columnId = $columnId/" simulate.m | \
+	sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
+
 	echo "quit; " | nice -n 19 /afs/ms/@sys/bin/matlab -nodesktop -nosplash -r $fName > sim.$columnId.complete;
 	tail -n${linesT} sim.$columnId.complete | head -n${lines} > sim.$columnId;
 else
-	perl -e "for $i (1 .. ${lines}) { print ((int(rand(3))-1), \"\\n\"); }" > sim.$columnId;
+	perl -e "for $i (1 .. ${lines}) { print ((int(rand(2))*2-1), \"\\n\"); }" > sim.$columnId;
 fi;
 cat sim.$columnId;
 

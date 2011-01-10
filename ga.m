@@ -42,7 +42,11 @@ save trained_net;
 % pokud poslanec nehlasoval, pak se vysledek nezapocita
 miss = sum(simulation + result == 0);
 total = sum(result ~= 0);
-hits_pct = (total-miss) / total;
+if total == 0
+	hist_pct = 0;
+else
+	hits_pct = (total-miss) / total;
+end;
 
 
 % vypsat shodu s realnym hlasovanim v procentech

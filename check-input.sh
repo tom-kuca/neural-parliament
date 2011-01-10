@@ -3,11 +3,18 @@ error='';
 memberCount=`head -n1 input.txt | sed 's/\t/\n/g' | wc -l`;
 votingCount=`cat input.txt | wc -l`;
 
+inputLenColumns=`cat input.txt | perl -ne '@p=split; print ($#p+1)."\n";' | sort | uniq -c | wc -l`;
+if [ $inputLenColumns != 1 ]; then 
+	echo "Sloupce input.txt jsou ruzne dlouhe." >&2;
+	cat input.txt | perl -ne '@p=split; print ($#p+1)."\n";' | sort | uniq -c >&2;
+	error='x';
+fi;
+
 vCount=`cat votings.txt | wc -l`;
 if [ $vCount != $votingCount ]; then 
 	echo "Lisi se pocet hlasovani" >&2;
 	echo "input.txt: $memberCount" >&2;
-	echo "votings.txt: $mCount" >&2;
+	echo "votings.txt: $vCount" >&2;
 	error='x';
 fi;
 

@@ -1,4 +1,6 @@
 #!/bin/bash
+STRICT=0;
+
 error='';
 memberCount=`head -n1 input.txt | sed 's/\t/\n/g' | wc -l`;
 votingCount=`cat input.txt | wc -l`;
@@ -26,14 +28,16 @@ if [ $mCount != $memberCount ]; then
 	error='x';
 fi;
 
-for i in `seq 1 ${memberCount}`; do 
-	l=`cat input.txt | cut -f$i | sort | uniq -c | wc -l`; 
-	if [ $l == 1 ]; then
-		echo "input.txt - $i - jen jedna hodnota" >&2;
-		cat input.txt | cut -f$i | sort | uniq -c >&2; 
-		error='x';
-	fi;
-done
+if [ $STRICT == 1 ]; then
+	for i in `seq 1 ${memberCount}`; do 
+		l=`cat input.txt | cut -f$i | sort | uniq -c | wc -l`; 
+		if [ $l == 1 ]; then
+			echo "input.txt - $i - jen jedna hodnota" >&2;
+			cat input.txt | cut -f$i | sort | uniq -c >&2; 
+			error='x';
+		fi;
+	done
+fi;
 
 if [ x${error} == xx ]; then
 	exit 2;

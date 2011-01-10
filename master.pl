@@ -22,7 +22,7 @@ if ( -f $MACHINES_FILE ) {
 	open (my $fh, '<', $MACHINES_FILE);
 	while ( <$fh> ) {
 		my @p = split;
-		$machines{$p[0]} = min($p[1], int($p[2] / $MEMORY_REQUIREMENT)); 
+		$machines{$p[0]} = min(int($p[1]/2), int($p[2] / $MEMORY_REQUIREMENT)); 
 	}
 	close($fh);
 } else { 

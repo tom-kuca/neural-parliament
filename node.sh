@@ -26,14 +26,29 @@ if [ $DEVEL == 0 ]; then
 	sed -r "s/^function ga/function $fName/" | \
 	sed -r "s/^function ga/function $fName/" | \
 	sed -r "s/trained_net/trained_net_${columnId}/" > $fName.m;
-
-	disp=`echo $((${columnId} + 20))`;
-	export DISPLAY=:${disp}
-	Xvfb :${disp} -screen 0 1024x768x16 &> /dev/null &
-	xb=`echo $!`;
-	echo "quit; " | nice -n 19 /afs/ms/@sys/bin/matlab -nodesktop -nosplash -r $fName > res.$columnId.complete;
-	kill $xb &> /dev/null;
-	cp trained_net_${columnId}.mat $CURDIR
+	err=0;
+	counter=0;
+	while [ ! -r input.txt ]; do 
+		sleep 2; 
+		counter=`$(($counter + 1))`;
+		if [ $counter -gt 5 ]; then
+			err=1;
+			break;
+		fi;
+	done;
+	if [ $err == 0 ]; then 
+		disp=`echo $((${columnId} + 20))`;
+		export DISPLAY=:${disp}
+		Xvfb :${disp} -screen 0 1024x768x16 &> /dev/null &
+		xb=`echo $!`;
+		echo "quit; " | nice -n 19 /afs/ms/@sys/bin/matlab -nodesktop -nosplash -r $fName > res.$columnId.complete;
+		kill $xb &> /dev/null;
+		cp trained_net_${columnId}.mat $CURDIR;
+	else
+		echo 0 > res.$columnId.complete;
+		echo 0 >> res.$columnId.complete;
+		echo 0 >> res.$columnId.complete;
+	fi;
 else
 	perl -e 'print (("\n", rand()) x 3);' > res.$columnId.complete;
 fi;

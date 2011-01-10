@@ -326,7 +326,7 @@ sub processResultThrow
 	# simulate his voting
 	copy('trained_net_' . $r . '.mat', 'trained_net_turn_' . $round . '.mat');	
 
-	my @keys = sort keys %membersWinning;
+	my @keys = sort { $a <=> $b } keys %membersWinning;
 	@voting = map { [@$_] } @votingO;
 
 	# vyhozeni nepotrenobnych sloupcu ze souboru
@@ -461,8 +461,15 @@ sub simulateThrow
 		}
 	}
 
-	createInputFile('input.txt');	
-	open(my $fhSim, '-|', "./simulate.sh " . ( $mId + 1));
+
+	createInputFile('input.txt');
+	my $expColWidth = ($memberCount + 1 - $turn);
+	my $actColWidth = (scalar @{$voting[0]});
+	if ( $expColWidth != $actColWidth ) { 
+		die("Error during input manipulation. Columns - EXP: $expColWidth; WAS: $actColWidth\n");
+	}
+	my $simCmd = "./simulate.sh " . ( $mId + 1) . " " . ($expColWidth);
+	open(my $fhSim, '-|', $simCmd);
 	my @mVoting = ();
 	my $mVotingId = 0;
 

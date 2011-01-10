@@ -237,9 +237,10 @@ for my $round ( 1 .. ($limit) ) {
 		my $actK = $membersMapping{$round - 1}{$k};
 		print "\tP\t$actK\t$members{$actK}{name}\t$results{$k}{score}\t$results{$k}{host}\t$results{$k}{time}\n";
 	}
-	for my $v (@wrongVoting) { 
-		print "\tV\t$v->{id}\t$v->{name}\t$v->{from}\t$v->{to}\n";	
-	}
+
+#	for my $v (@wrongVoting) { 
+#		print "\tV\t$v->{id}\t$v->{name}\t$v->{from}\t$v->{to}\n";	
+#	}
 		
 }
 createInputFile("input.txt.end");

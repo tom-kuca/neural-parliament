@@ -6,7 +6,9 @@ machines.txt: lab-hosts.sh lab-execute.sh hostInfo.sh
 
 # Pocet spustenych node.sh na jednotlivych serverech
 status: machines.txt
-	for i in `cat machines.txt | cut -f1`; do echo -n "$$i: "; ssh $$i " ps -U ${USER} | grep node.sh | wc -l"; done
+	rm /tmp/status.${USER}; \
+	for i in `cat machines.txt | cut -f1`; do echo -n "$$i: "; ssh $$i " ps -U ${USER} | grep node.sh | wc -l | tee -a /tmp/status.${USER}"; done; \
+	cat /tmp/status.${USER} | cut -f2 -d: | perl -ne '$$sum+=$$_; print "Sum: $$sum\n";' | tail -n1;
 
 # Vytizeni labu
 load: machines.txt

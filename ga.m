@@ -14,11 +14,11 @@ voting = [input(:, 1:columnId-1) input(:, (columnId+1):num_voters)]';
 result = input(:, columnId)'
 
 % Vytvorit neuronovou sit
-net=newff(voting,result,[10],{},'trainrp');
+net=newff(voting,result,[20],{},'trainrp');
 
-net.trainParam.epochs = 5;
-net.trainParam.goal = 0.01;
-net.trainParam.max_fail = 10;
+net.trainParam.epochs = 1000;
+net.trainParam.goal = 0.001;
+net.trainParam.max_fail = 20;
 
 % natrenovat neuronovou sit
 %

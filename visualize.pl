@@ -30,6 +30,9 @@ while ( <STDIN> ) {
 		$pRow = 0;
 	} else { 
 		if ( $p[1] eq 'P' ) { 
+			if ( $p[4] !~ /^[0-9]+/) { 
+				$p[4] = 0;
+			}
 			$members{$turn}[$pRow] = { 'name' => $p[3], 'pred' => $p[4], 'pos' => $pRow };
 			$histograms{$turn}{int(($p[4]-0.001)*10)}++;
 			$pRow++;

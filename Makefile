@@ -48,14 +48,25 @@ out.11.avi: out.period.11 voting_11.tar.gz
 	cat out.period.11 | ./visualize.sh  'Jan Fišer|2009-2010'; \
 	cp out.avi out.11.avi;
 
-out.period.11:
-	wget 'http://www.ms.mff.cuni.cz/~majlm5am/out.period.11';
-
-voting_11.tar.gz:
-	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_11.tar.gz';
+out.12.avi: out.period.12 voting_12.tar.gz
+	tar -xzf voting_12.tar.gz; \
+	cat out.period.12 | ./visualize.sh  'Petr Nečas|2010-2011'; \
+	cp out.avi out.12.avi;
 
 voting_10.tar.gz:
 	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_10.tar.gz';
 
 out.period.10:
 	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/out.period.10';
+
+out.period.11:
+	wget 'http://www.ms.mff.cuni.cz/~majlm5am/out.period.11';
+
+voting_11.tar.gz:
+	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_11.tar.gz';
+
+out.period.12:
+	wget 'http://www.ms.mff.cuni.cz/~majlm5am/out.period.12';
+
+voting_12.tar.gz:
+	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_12.tar.gz';

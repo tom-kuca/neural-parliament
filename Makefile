@@ -28,3 +28,34 @@ lab-execute.sh:
 hostInfo.sh:
 	wget 'http://w2c.martin.majlis.cz/w2c/data/hostInfo.sh'
 	chmod a+x hostInfo.sh;
+
+visualize: visualize-10 visualize-11
+
+visualize-clean:
+	rm -rf out.*.avi out.period.*;
+
+visualize-10: out.10.avi
+
+visualize-11: out.11.avi
+
+out.10.avi: out.period.10 voting_10.tar.gz
+	tar -xzf voting_10.tar.gz; \
+	cat out.period.10 | ./visualize.sh  'Mirek Topolánek|2007 - 2009'; \
+	cp out.avi out.10.avi;
+	
+out.11.avi: out.period.11 voting_11.tar.gz
+	tar -xzf voting_11.tar.gz; \
+	cat out.period.11 | ./visualize.sh  'Jan Fišer|2009-2010'; \
+	cp out.avi out.11.avi;
+
+out.period.11:
+	wget 'http://www.ms.mff.cuni.cz/~majlm5am/out.period.11';
+
+voting_11.tar.gz:
+	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_11.tar.gz';
+
+voting_10.tar.gz:
+	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/voting_10.tar.gz';
+
+out.period.10:
+	wget 'http://www.ms.mff.cuni.cz/~kucat5am/votings/out.period.10';

@@ -29,7 +29,7 @@ hostInfo.sh:
 	wget 'http://w2c.martin.majlis.cz/w2c/data/hostInfo.sh'
 	chmod a+x hostInfo.sh;
 
-visualize: visualize-10 visualize-11
+visualize: visualize-10 visualize-11 visualize-12
 
 visualize-clean:
 	rm -rf out.*.avi out.period.*;
@@ -37,6 +37,8 @@ visualize-clean:
 visualize-10: out.10.avi
 
 visualize-11: out.11.avi
+
+visualize-12: out.12.avi
 
 out.10.avi: out.period.10 voting_10.tar.gz
 	tar -xzf voting_10.tar.gz; \

@@ -22,10 +22,15 @@ if ( -f 'members.txt' ) {
 
 my $primeMinister = '';
 my $period = '';
-if ( defined($ARGV[0]) ) { 
+my $footer = '';
+if ( $ARGV[0] ne '' ) { 
 	my @p = split(/\|/, $ARGV[0]);
 	$primeMinister = $p[0];
 	$period = $p[1];
+	$footer = $primeMinister;
+	if ( $period ) { 
+		$footer .= " ($period)";
+	}
 }
 
 
@@ -73,6 +78,7 @@ my $lineHeight = 16;
 my $titleFontSize = 20;
 my $histFontSize = 14;
 my $histLineHeight = 18;
+my $lineNo = 0;
 
 drawInitFrame();
 if ( $primeMinister ) { 
@@ -96,6 +102,7 @@ sub drawFrame
 	my $headerColor = $red;
 	my $memberColor = $white;
 
+
 	# generate header
 	$im->stringFT($headerColor,$font,$titleFontSize,0,10,30, sprintf("%3d", $r->{t}));
 	$im->stringFT($headerColor,$font,$titleFontSize,0,60,30, sprintf("%-20s", $r->{name}));
@@ -107,8 +114,9 @@ sub drawFrame
 	# generate members list
 	$y = $membersTop;
 	$col = 0;
+	$lineNo = 0;
 	for my $m (@{$members{$r->{t}}}) {
-		if ( $m->{pos} % 2 == 1 ) { 
+		if ( $lineNo % 2 == 1 ) { 
 			$im->filledRectangle($col*$colWidth,$y - $lineHeight+2,(1+$col) * $colWidth,$y+2,$gray);
 		}
 
@@ -117,6 +125,7 @@ sub drawFrame
 		$im->stringFT($memberColor,$font,11,0, 200 + $col*$colWidth,$y,sprintf("%-7s", substr($m->{party},0,7)));
 		$im->stringFT($memberColor,$font,11,0, 270 + $col*$colWidth,$y,sprintf("%2.1f%%", 100*$m->{pred}));
 		$y += $lineHeight;
+		$lineNo++;
 		if ($col == 0 && $y > 470 ) { 
 			last;
 		}
@@ -124,12 +133,13 @@ sub drawFrame
 
 	$y = $membersTop;
 	$col = 1;
+	$lineNo = 0;
 	for my $m (reverse @{$members{$r->{t}}}) {
 		if ( $m->{pred} < 0.01 ) { 
 			next;
 		}
 
-		if ( $m->{pos} % 2 == 1 ) { 
+		if ( $lineNo % 2 == 1 ) { 
 			$im->filledRectangle($col*$colWidth,$y - $lineHeight+2,(1+$col) * $colWidth,$y+2,$gray);
 		}
 
@@ -138,7 +148,7 @@ sub drawFrame
 		$im->stringFT($memberColor,$font,11,0, 200 + $col*$colWidth,$y,sprintf("%-7s", substr($m->{party},0,7)));
 		$im->stringFT($memberColor,$font,11,0, 270 + $col*$colWidth,$y,sprintf("%2.1f%%", 100*$m->{pred}));
 		$y += $lineHeight;
-
+		$lineNo++;
 		if ( $y > 370 ) { 
 			last;
 		}
@@ -172,7 +182,7 @@ sub drawFrame
 		$y += $histLineHeight;
 	}
 	
-	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,"$primeMinister ($period)");
+	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,$footer);
 
 	my $pngData = $im->png();
 	saveFrame(\$pngData);
@@ -328,7 +338,7 @@ sub drawInitFrame
 	$im->stringFT($memberColor,$font,11,0, 270 + $col*$colWidth,$y,sprintf("%4s", '#Pred'));
 	$y += 20;
 
-	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,"$primeMinister ($period)");
+	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,$footer);
 
 	my $pngData = $im->png();
 	for my $j (0 .. 5 ) { 

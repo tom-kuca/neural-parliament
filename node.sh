@@ -53,7 +53,7 @@ else
 	perl -e 'print (("\n", rand()) x 3);' > res.$columnId.complete;
 fi;
 
-tail -n2 res.$columnId.complete | head -n1 > res.$columnId;
+tail -n4 res.$columnId.complete | head -n3 > res.$columnId;
 dateEnd=`date '+%s.%N'`;
 hostname;
 echo $columnId;
@@ -62,5 +62,3 @@ echo $dateEnd;
 cat res.$columnId;
 
 rm -rf $TMPDIR       
-
-

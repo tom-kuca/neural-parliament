@@ -3,7 +3,7 @@
 
 DB_NAME=parlament
 DB_USER=tomaskuca
-DB_PASSWORD=secret
+DB_PASSWORD=daneel
 
 DIR=/tmp
 USER=tomas
@@ -12,7 +12,7 @@ VOTINGS=votings.txt
 MEMBERS=members.txt
 RESULTS=input.txt
 
-for PERIOD in `seq 1 12`; do  
+for PERIOD in `seq 1 13`; do  
 # Seznam poslanců
     members_query="
     SELECT 

@@ -20,6 +20,16 @@ if ( -f 'members.txt' ) {
 	}
 }
 
+my $votingCount = 0;
+if ( -f 'votings.txt' ) { 
+	open(my $fh, '<:utf8', 'votings.txt');
+	while (<$fh>) { 
+		chomp;
+		$votingCount++;
+	}
+
+}
+
 my $primeMinister = '';
 my $period = '';
 my $footer = '';
@@ -37,6 +47,8 @@ if ( $ARGV[0] ne '' ) {
 my $turn = 0;
 my @result = ();
 my %members = ();
+my %parties = ();
+my %partiesAll = (); 
 my %histograms = ();
 my $pRow = 0;
 while ( <STDIN> ) { 
@@ -60,10 +72,13 @@ while ( <STDIN> ) {
 			}
 			$members{$turn}[$pRow] = { 'name' => $p[3], 'pred' => $p[4], 'pos' => $pRow, 'time' => $p[6], 'party' => $memberInfo{$p[2]}->{'party'} };
 			$histograms{$turn}{int(($p[4]-0.001)*10)}++;
+			$parties{$turn}{$memberInfo{$p[2]}->{'party'}}++;
+			$partiesAll{$memberInfo{$p[2]}->{'party'}}++;
 			$pRow++;
 		}
 	}
 }
+my @party = sort { $partiesAll{$b} <=> $partiesAll{$a} } keys %partiesAll;
 
 my $frameId = 0;
 my $y = 0;
@@ -72,7 +87,7 @@ my $id = 0;
 my $col = 0;
 my $colWidth = 320;
 my $membersTop = 60;
-my $histTop = $membersTop + 330;
+my $histTop = $membersTop + 290;
 my $histLeft = $colWidth + 20;
 my $lineHeight = 16;
 my $titleFontSize = 20;
@@ -126,7 +141,7 @@ sub drawFrame
 		$im->stringFT($memberColor,$font,11,0, 270 + $col*$colWidth,$y,sprintf("%2.1f%%", 100*$m->{pred}));
 		$y += $lineHeight;
 		$lineNo++;
-		if ($col == 0 && $y > 470 ) { 
+		if ($col == 0 && $y > 440 ) { 
 			last;
 		}
 	}
@@ -149,7 +164,7 @@ sub drawFrame
 		$im->stringFT($memberColor,$font,11,0, 270 + $col*$colWidth,$y,sprintf("%2.1f%%", 100*$m->{pred}));
 		$y += $lineHeight;
 		$lineNo++;
-		if ( $y > 370 ) { 
+		if ( $y > 330 ) { 
 			last;
 		}
 	}
@@ -180,6 +195,14 @@ sub drawFrame
 
 
 		$y += $histLineHeight;
+	}
+
+
+	my $l = 0;
+	for my $p (@party) { 
+		$im->stringFT($memberColor,$font,11,0, $l, 455,sprintf("%7s: %3d", substr($p, 0, 7), $parties{$r->{t}}{$p}));
+		$l += 100;
+
 	}
 	
 	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,$footer);
@@ -364,6 +387,8 @@ sub drawInfoFrame
 	# generate header
 	$im->stringFT($red,$font,55,0,40,150, $primeMinister);
 	$im->stringFT($white,$font,40,0,40,210, $period);
+
+	$im->stringFT($white,$font,40,0,40,270, $votingCount . ' hlasování');
 
 #	$im->stringFT($memberColor,$font,10,0, $histLeft+5,475,"$primeMinister ($period)");
 

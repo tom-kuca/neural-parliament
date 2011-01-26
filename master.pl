@@ -163,9 +163,11 @@ for my $round ( 1 .. ($limit) ) {
 	my %results = ();
 	for my $res (@{$result}) {
 		my @p = split(/\n/, $res);
-		$results{$p[1]} = { 'score' => $p[4],
-							'host' => $p[0],
-							'time' => $p[3] - $p[2],
+		$results{$p[1]} = { 'score' => $p[6],
+				'host' => $p[0],
+				'time' => $p[3] - $p[2],
+                                'hits' => $p[4],
+                                'total' => $p[5]
 	 };
 	}
 
@@ -231,11 +233,17 @@ for my $round ( 1 .. ($limit) ) {
 	}
 	print STDERR time() . "\tPROCESS RESULTS - END\n";
 	
+        my $name = "";
+        my $score = "";
 	# print out information about iteration
-	print "$round\t$bestReal\t$members{$bestReal}{name}\t$results{$bestAct}{score}\t$diffD\t$diffV\n";
+        $name = sprintf("%30s", $members{$bestReal}{name});
+        $score = sprintf("%.4f (%d/%d)", $results{$bestAct}{score}, $results{$bestAct}{hits}, $results{$bestAct}{total});
+	print "$round\t$bestReal\t$name\t$score\t$diffD\t$diffV\n";
 	for my $k (@sorted) { 
 		my $actK = $membersMapping{$round - 1}{$k};
-		print "\tP\t$actK\t$members{$actK}{name}\t$results{$k}{score}\t$results{$k}{host}\t$results{$k}{time}\n";
+                $name = sprintf("%30s", $members{$actK}{name});
+                $score = sprintf("%.4f (%4d/%4d)", $results{$k}{score}, $results{$k}{hits}, $results{$k}{total});
+		print "\tP\t$actK\t$name\t$score\t$results{$k}{host}\t$results{$k}{time}\n";
 	}
 
 #	for my $v (@wrongVoting) { 

@@ -104,7 +104,7 @@ if ( exists($ARGV[0]) ) {
 	}
 }
 if ( $limit >= $memberCount ) { 
-	$limit = $memberCount-1;
+	$limit = $memberCount;
 }
 
 # specify strategy
@@ -146,30 +146,40 @@ for my $round ( 1 .. ($limit) ) {
 
 	# prepare commands for execution
 	my @commands = ();
+	my %executed = ();
 	for my $k (sort { $a <=> $b }  grep { $members{$_}{type} == 0 } keys %members) {
 		my $command = "./node.sh $mappingR2A{$k}";
 		if ( $DEBUG ) {
 			print STDERR "\tCommand: $command\n";
 		}
+		$executed{$mappingR2A{$k}} = 0;
 		push(@commands, $command);
 	}
 
-	# execute commands
-	print STDERR time() . "\tEXECUTE - BEGIN\n";
-	my $result = $cluster->qx(@commands);
-	print STDERR time() . "\tEXECUTE - END\n";
-
-	# store results
 	my %results = ();
-	for my $res (@{$result}) {
-		my @p = split(/\n/, $res);
-		$results{$p[1]} = { 'score' => $p[6],
-				'host' => $p[0],
-				'time' => $p[3] - $p[2],
-                                'hits' => $p[4],
-                                'total' => $p[5]
-	 };
+	my $attemp = 0;
+	executeTraining($attemp, \@commands, \%results, \%executed);
+
+	my @bogus = grep { $executed{$_} == 0 } keys %executed;
+
+
+	while ( @bogus && $attemp < 5) { 
+
+		$attemp++;
+		@commands = ();
+		for my $b (@bogus) { 
+			my $command = "./node.sh $b";
+			if ( $DEBUG ) {
+				print STDERR "\tCommand: $command\n";
+			}
+			push(@commands, $command);
+		}
+	
+		executeTraining($attemp, \@commands, \%results, \%executed);
+		@bogus = grep { $executed{$_} == 0 } keys %executed;
+
 	}
+
 
 	# find the most predictable member
 	my @sorted = sort { $results{$b}{score} <=> $results{$a}{score} } keys %results;
@@ -477,35 +487,50 @@ sub simulateThrow
 		die("Error during input manipulation. Columns - EXP: $expColWidth; WAS: $actColWidth\n");
 	}
 	my $simCmd = "./simulate.sh " . ( $mId + 1) . " " . ($expColWidth);
-	open(my $fhSim, '-|', $simCmd);
-	my @mVoting = ();
+
+	my $attemp = 0;
+	my $error = 0;
 	my $mVotingId = 0;
+	my @mVoting = ();
+	do { 
+		open(my $fhSim, '-|', $simCmd);
+		print STDERR time() . "\tSIMMULATE " . ( $mId + 1) . " ($attemp)\n";
+		$error = 0;
+		$attemp++;
+		my $mVotingId = 0;
 
-	while ( <$fhSim> ) { 
-		chomp;
-		my $v = int($_);
-		if ( $_ !~ /^(1|0|-1)/ ) {
-			print STDERR $_, "\n";
-			while (<$fhSim>) {
-				print STDERR $_;
+		while ( <$fhSim> ) { 
+			chomp;
+			my $v = int($_);
+			if ( $_ !~ /^(1|0|-1)$/ ) {
+				print STDERR $_, "\n";
+				while (<$fhSim>) {
+					print STDERR $_;
+				}
+				# die("Broken simulation");
+				last;
 			}
-			die("Broken simulation");
-		}
 		
-		# if member doesn't vote in real, he will skip voting in simulation
-		my $orig = $votingO[$mVotingId][$mappedId]; 
-		if ( $orig == 0 ) { 
-			$v = 0;
-		}
-		if ( $DEBUG ) {
-			print STDERR "\tS: ". int($_)."\tO: " . $orig . "\tR: " . $v . "\n";
-		}
-#		$mVoting[$mVotingId] = 'S['.$turn.']'.$v;
-		$mVoting[$mVotingId] = $v;
+			# if member doesn't vote in real, he will skip voting in simulation
+			my $orig = $votingO[$mVotingId][$mappedId]; 
+			if ( $orig == 0 ) { 
+				$v = 0;
+			}
+			if ( $DEBUG ) {
+				print STDERR "\tS: ". int($_)."\tO: " . $orig . "\tR: " . $v . "\n";
+			}
+	#		$mVoting[$mVotingId] = 'S['.$turn.']'.$v;
+			$mVoting[$mVotingId] = $v;
 
-		$mVotingId++;
-	}	
-	close($fhSim);
+			$mVotingId++;
+		}	
+		close($fhSim);
+
+#		print STDERR "$mVotingId : $#mVoting != $#voting\n";
+		if ( $#mVoting != $#voting ) { 
+			$error = 1;
+		}
+	} while ( $attemp < 5 && $error == 1 );
 
 	# zadny sloupec se nepridava, jen se prepisi hodnoty
 #	if ( $turn == $round ) { 
@@ -543,6 +568,29 @@ sub simulateThrow
 
 	if ( $DEBUG ) {
 		print STDERR "After:\t" . join("\t", @{$voting[0]}) . "\n";	
+	}
+}
+
+sub executeTraining
+{
+	my ($attemp, $commandsRef, $resultsRef, $executedRef) = @_; 
+	# execute commands
+	print STDERR time() . "\tEXECUTE ($attemp) - BEGIN\n";
+	my $result = $cluster->qx(@{$commandsRef});
+	print STDERR time() . "\tEXECUTE ($attemp) - END\n";
+
+	# store results
+	for my $res (@{$result}) {
+		my @p = split(/\n/, $res);
+		$resultsRef->{$p[1]} = { 'score' => $p[6],
+				'host' => $p[0],
+				'time' => $p[3] - $p[2],
+                                'hits' => $p[4],
+                                'total' => $p[5]
+	 	};
+		if ( $p[6] ) {
+			$executedRef->{$p[1]} = 1;
+		}
 	}
 }
 

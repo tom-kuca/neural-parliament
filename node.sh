@@ -50,7 +50,10 @@ if [ $DEVEL == 0 ]; then
 		echo 0 >> res.$columnId.complete;
 	fi;
 else
-	perl -e 'print (("\n", rand()) x 3);' > res.$columnId.complete;
+	d=`date +'%N' | cut -c3`;
+	if [ $d -gt 2 ]; then
+		perl -e 'print (("\n", rand()) x 5);' > res.$columnId.complete;
+	fi;
 fi;
 
 tail -n4 res.$columnId.complete | head -n3 > res.$columnId;
